@@ -56,23 +56,24 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
     const tokens = [];
     for (let c = 0; c < roomState.currentLevel; c++) {
       const token = me.pyramid[`${row}-${c}`];
+      const isUsed = me.usedCols && me.usedCols.includes(c);
       tokens.push(
         <button
           key={c}
           className="btn"
-          disabled={me.currentChoice !== null}
+          disabled={me.currentChoice !== null || isUsed}
           style={{
-            fontSize: 'var(--token-font)', padding: '0.8rem', background: me.currentChoice === c ? 'var(--color-primary)' : 'var(--glass-bg)',
+            fontSize: 'var(--token-font)', padding: '0.8rem', background: me.currentChoice === c ? 'var(--color-primary)' : (isUsed ? 'transparent' : 'var(--glass-bg)'),
             border: '2px solid var(--color-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center',
             flex: '1 1 auto', minWidth: 'var(--token-size)',
-            opacity: (me.currentChoice !== null && me.currentChoice !== c) ? 0.5 : 1,
-            cursor: me.currentChoice !== null ? 'default' : 'pointer'
+            opacity: isUsed ? 0.2 : ((me.currentChoice !== null && me.currentChoice !== c) ? 0.5 : 1),
+            cursor: (me.currentChoice !== null || isUsed) ? 'default' : 'pointer'
           }}
           onClick={() => handleTokenSelect(c)}
         >
           {TOKENS[token as TokenType].icon}
           <span style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: me.currentChoice === c ? 'white' : '#ccc' }}>
-            {me.currentChoice === c ? 'Elegido' : 'Lanzar'}
+            {isUsed ? 'Usada' : (me.currentChoice === c ? 'Elegido' : 'Lanzar')}
           </span>
         </button>
       );
@@ -115,7 +116,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
               <p style={{ color: '#f39c12', marginTop: '0.5rem' }}>Esperando a que el rival elija su ficha...</p>
             )}
             {me.currentChoice === null && (
-              <p style={{ color: '#aaa', marginTop: '0.5rem' }}>Selecciona tu ficha para la batalla normal de este nivel.</p>
+              <p style={{ color: '#aaa', marginTop: '0.5rem' }}>Selecciona una ficha para el próximo duelo ({roomState.currentLevel - (me.usedCols ? me.usedCols.length : 0)} restantes).</p>
             )}
             {renderCurrentRowTokens()}
           </div>

@@ -16,21 +16,38 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
   const [botScore, setBotScore] = useState(0);
   const [tiePot, setTiePot] = useState(0);
   
-  const [logs, setLogs] = useState<{ id: number, text: string, type: 'normal' | 'escaramuza' | 'info' }[]>([]);
+  const [usedColsPlayer, setUsedColsPlayer] = useState<number[]>([]);
+  const [usedColsBot, setUsedColsBot] = useState<number[]>([]);
+  
+  const [logs, setLogs] = useState<{ id: number, text: string, type: 'normal' | 'info' }[]>([]);
   const [logCounter, setLogCounter] = useState(0);
 
-  const addLog = (text: string, type: 'normal' | 'escaramuza' | 'info') => {
+  const addLog = (text: string, type: 'normal' | 'info') => {
     setLogs(prev => [{ id: logCounter, text, type }, ...prev]);
     setLogCounter(c => c + 1);
   };
 
+  // Auto-selección cuando solo queda 1 ficha
+  React.useEffect(() => {
+    if (currentLevel <= mode.levels && currentLevel - usedColsPlayer.length === 1) {
+      const remaining = Array.from({ length: currentLevel }, (_, i) => i).find(c => !usedColsPlayer.includes(c));
+      if (remaining !== undefined) {
+        const timer = setTimeout(() => handleTokenSelect(remaining), 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usedColsPlayer.length, currentLevel]);
+
   const handleTokenSelect = (colIndex: number) => {
+    if (usedColsPlayer.includes(colIndex)) return;
+
     const row = currentLevel - 1;
     const playerKey = `${row}-${colIndex}`;
     const playerToken = playerPyramid[playerKey];
 
-    // 1. Bot chooses randomly from its row
-    const botCols = Array.from({ length: currentLevel }, (_, i) => i);
+    // 1. Bot chooses randomly from its REMAINING row
+    const botCols = Array.from({ length: currentLevel }, (_, i) => i).filter(c => !usedColsBot.includes(c));
     const botChoiceCol = botCols[Math.floor(Math.random() * botCols.length)];
     const botTokenKey = `${row}-${botChoiceCol}`;
     const botToken = botPyramid[botTokenKey];
@@ -48,58 +65,36 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     if (result === 'WIN') {
       newPlayerScore += pointsToAward;
       newTiePot = 0;
-      addLog(`Nivel ${currentLevel} Batalla: Tu ${TOKENS[playerToken].name} VENCE al ${TOKENS[botToken].name} rival! (+${pointsToAward} pt)`, 'normal');
+      addLog(`Duelo Nivel ${currentLevel}: Tu ${TOKENS[playerToken].name} VENCE al ${TOKENS[botToken].name} rival! (+${pointsToAward} pt)`, 'normal');
     } else if (result === 'LOSS') {
       newBotScore += pointsToAward;
       newTiePot = 0;
-      addLog(`Nivel ${currentLevel} Batalla: Tu ${TOKENS[playerToken].name} PIERDE ante el ${TOKENS[botToken].name} rival! (-${pointsToAward} pt al rival)`, 'normal');
+      addLog(`Duelo Nivel ${currentLevel}: Tu ${TOKENS[playerToken].name} PIERDE ante el ${TOKENS[botToken].name} rival!`, 'normal');
     } else {
       if (isSpecial) newTiePot += 1;
-      addLog(`Nivel ${currentLevel} Batalla: ¡EMPATE entre ${TOKENS[playerToken].name}s! ${isSpecial ? `Bote acumulado a ${newTiePot}` : ''}`, 'normal');
-    }
-
-    // 3. Resolve Escaramuzas (remaining tokens)
-    const playerRemaining: TokenType[] = [];
-    const botRemaining: TokenType[] = [];
-    for (let c = 0; c < currentLevel; c++) {
-      if (c !== colIndex) playerRemaining.push(playerPyramid[`${row}-${c}`]);
-      if (c !== botChoiceCol) botRemaining.push(botPyramid[`${row}-${c}`]);
-    }
-
-    // Shuffle bot remaining to make skirmishes random
-    botRemaining.sort(() => Math.random() - 0.5);
-
-    for (let i = 0; i < playerRemaining.length; i++) {
-      const pToken = playerRemaining[i];
-      const bToken = botRemaining[i];
-      const escResult = resolveBattle(pToken, bToken, currentLevel);
-      const escBase = isSpecial ? 2 : 1;
-      const escPoints = escBase + (isSpecial ? newTiePot : 0);
-
-      if (escResult === 'WIN') {
-        newPlayerScore += escPoints;
-        newTiePot = 0;
-        addLog(`Escaramuza: Tu ${TOKENS[pToken].name} VENCE a ${TOKENS[bToken].name}. (+${escPoints} pt)`, 'escaramuza');
-      } else if (escResult === 'LOSS') {
-        newBotScore += escPoints;
-        newTiePot = 0;
-        addLog(`Escaramuza: Tu ${TOKENS[pToken].name} PIERDE ante ${TOKENS[bToken].name}.`, 'escaramuza');
-      } else {
-        if (isSpecial) newTiePot += 2; // "+2 si es empate en escaramuza" solo en reglas especiales
-        addLog(`Escaramuza: EMPATE de ${TOKENS[pToken].name}s. ${isSpecial ? `Bote a ${newTiePot}` : ''}`, 'escaramuza');
-      }
+      addLog(`Duelo Nivel ${currentLevel}: ¡EMPATE entre ${TOKENS[playerToken].name}s! ${isSpecial ? `Bote acumulado a ${newTiePot}` : ''}`, 'normal');
     }
 
     setPlayerScore(newPlayerScore);
     setBotScore(newBotScore);
     setTiePot(newTiePot);
 
-    if (currentLevel < mode.levels) {
-      setCurrentLevel(currentLevel + 1);
-      addLog(`-- Avanzando al Nivel ${currentLevel + 1} --`, 'info');
+    const newUsedP = [...usedColsPlayer, colIndex];
+    const newUsedB = [...usedColsBot, botChoiceCol];
+
+    if (newUsedP.length === currentLevel) {
+      setUsedColsPlayer([]);
+      setUsedColsBot([]);
+      if (currentLevel < mode.levels) {
+        setCurrentLevel(currentLevel + 1);
+        addLog(`-- Avanzando al Nivel ${currentLevel + 1} --`, 'info');
+      } else {
+        setCurrentLevel(currentLevel + 1); // Game over state
+        addLog(`-- PARTIDA FINALIZADA --`, 'info');
+      }
     } else {
-      setCurrentLevel(currentLevel + 1); // Game over state
-      addLog(`-- PARTIDA FINALIZADA --`, 'info');
+      setUsedColsPlayer(newUsedP);
+      setUsedColsBot(newUsedB);
     }
   };
 
@@ -109,19 +104,24 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     const tokens = [];
     for (let c = 0; c < currentLevel; c++) {
       const token = playerPyramid[`${row}-${c}`];
+      const isUsed = usedColsPlayer.includes(c);
       tokens.push(
         <button
           key={c}
           className="btn"
+          disabled={isUsed}
           style={{
-            fontSize: 'var(--token-font)', padding: '0.8rem', background: 'var(--glass-bg)',
+            fontSize: 'var(--token-font)', padding: '0.8rem', background: isUsed ? 'transparent' : 'var(--glass-bg)',
             border: '2px solid var(--color-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center',
-            flex: '1 1 auto', minWidth: 'var(--token-size)'
+            flex: '1 1 auto', minWidth: 'var(--token-size)',
+            opacity: isUsed ? 0.2 : 1, cursor: isUsed ? 'default' : 'pointer'
           }}
           onClick={() => handleTokenSelect(c)}
         >
           {TOKENS[token].icon}
-          <span style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#ccc' }}>Lanzar</span>
+          <span style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#ccc' }}>
+            {isUsed ? 'Usada' : 'Lanzar'}
+          </span>
         </button>
       );
     }
@@ -161,7 +161,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
         {!isGameOver ? (
           <div style={{ textAlign: 'center' }}>
             <h3>Nivel Actual: {currentLevel} de {mode.levels}</h3>
-            <p style={{ color: '#aaa', marginTop: '0.5rem' }}>Selecciona tu ficha para la batalla normal de este nivel. Las demás irán a escaramuzas automáticamente.</p>
+            <p style={{ color: '#aaa', marginTop: '0.5rem' }}>Selecciona una ficha para el próximo duelo de este nivel ({currentLevel - usedColsPlayer.length} restantes).</p>
             {renderCurrentRowTokens()}
           </div>
         ) : (
@@ -184,8 +184,8 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
               padding: '0.8rem',
               borderRadius: '8px',
               fontSize: '0.9rem',
-              background: log.type === 'normal' ? 'rgba(230, 177, 42, 0.1)' : (log.type === 'escaramuza' ? 'rgba(255,255,255,0.05)' : 'transparent'),
-              borderLeft: log.type === 'normal' ? '3px solid var(--color-primary)' : (log.type === 'escaramuza' ? '3px solid #ccc' : 'none'),
+              background: log.type === 'normal' ? 'rgba(230, 177, 42, 0.1)' : 'transparent',
+              borderLeft: log.type === 'normal' ? '3px solid var(--color-primary)' : 'none',
               color: log.type === 'info' ? 'var(--color-secondary-light)' : 'white'
             }}>
               {log.text}

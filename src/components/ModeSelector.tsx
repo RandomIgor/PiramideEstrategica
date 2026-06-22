@@ -27,7 +27,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack
             onChange={e => setUseSpecialRules(e.target.checked)} 
             style={{ width: '20px', height: '20px' }}
           />
-          <span>Activar Modos Especiales (Bote y Escaramuzas Dobles)</span>
+          <span>Activar Reglas Especiales (Bote Acumulativo en Empates)</span>
         </label>
         
         {isMultiplayer && (

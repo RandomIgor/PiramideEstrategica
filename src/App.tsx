@@ -289,11 +289,7 @@ function App() {
           <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--color-secondary)' }}>Modos Especiales</h2>
           <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
             <h3 style={{ color: 'var(--color-primary)' }}>Desempates Acumulativos</h3>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>Si dos fichas empatan (mismo valor), se genera un Bote de 1 punto. Quien gane el siguiente enfrentamiento se lleva los puntos de la victoria MÁS el Bote acumulado. ¡Ideal para partidas de infarto!</p>
-          </div>
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px' }}>
-            <h3 style={{ color: 'var(--color-primary)' }}>Guerra de Escaramuzas</h3>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>Un modo donde las escaramuzas (batallas automáticas sobrantes de un nivel) valen DOBLE. Obliga a pensar muy bien qué fichas usar como sacrificio y cuáles dejar para las escaramuzas.</p>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>Si dos fichas empatan (mismo valor), se genera un Bote de 1 punto. Quien gane el siguiente duelo se lleva los puntos de la victoria MÁS el Bote acumulado. ¡Ideal para partidas de infarto!</p>
           </div>
           <div style={{ textAlign: 'center', marginTop: '2rem' }}>
             <button className="btn btn-secondary" onClick={() => setCurrentView('menu')}>Volver</button>
@@ -323,9 +319,8 @@ function App() {
           <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>Pirámide Estratégica es un juego de deducción, engaño y táctica para 2 jugadores ambientado en el Antiguo Egipto. El objetivo es colocar inteligentemente tus fichas en una pirámide y ganar batallas contra tu oponente.</p>
           
           <h3 style={{ color: 'var(--color-primary)' }}>2. Fases del Juego</h3>
-          <p style={{ marginBottom: '0.5rem', lineHeight: '1.6' }}><strong>Fase 1: Construcción.</strong> Ocultos del rival, cada jugador arrastra sus fichas para formar la pirámide.</p>
-          <p style={{ marginBottom: '0.5rem', lineHeight: '1.6' }}><strong>Fase 2: Batallas Normales.</strong> Nivel por nivel (desde la cúspide), los jugadores eligen la ficha a enfrentar. Quien tenga el valor más alto (salvo Reglas Especiales) suma 1 punto.</p>
-          <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}><strong>Fase 3: Escaramuzas.</strong> Las fichas sobrantes de cada nivel chocan de forma automática, otorgando 1 punto extra por victoria.</p>
+          <p style={{ marginBottom: '0.5rem', lineHeight: '1.6' }}><strong>Fase 1: Construcción.</strong> Ocultos del rival, cada jugador arrastra o toca sus fichas para formar la pirámide.</p>
+          <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}><strong>Fase 2: Batallas (Duelos).</strong> Nivel por nivel (desde la cúspide), los jugadores eligen la ficha a enfrentar en una serie de duelos uno contra uno. Quien tenga el valor más alto (salvo Reglas Especiales) suma 1 punto. El nivel termina cuando todas las fichas de esa fila han combatido.</p>
 
           <h3 style={{ color: 'var(--color-primary)' }}>3. Modos de Pirámide</h3>
           <ul style={{ marginBottom: '1rem', lineHeight: '1.6', paddingLeft: '1.5rem' }}>

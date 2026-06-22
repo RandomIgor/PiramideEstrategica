@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
     rooms[roomId] = {
       mode: mode,
       isPrivate: isPrivate || false,
-      players: [{ id: socket.id, name: username || 'Jugador 1', score: 0, ready: false, pyramid: null, currentChoice: null }],
+      players: [{ id: socket.id, name: username || 'Jugador 1', score: 0, ready: false, pyramid: null, currentChoice: null, usedCols: [] }],
       currentLevel: 1,
       tiePot: 0,
       logs: []
@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
   socket.on('join_room', ({ roomId, username }) => {
     const room = rooms[roomId];
     if (room && room.players.length === 1) {
-      room.players.push({ id: socket.id, name: username || 'Jugador 2', score: 0, ready: false, pyramid: null, currentChoice: null });
+      room.players.push({ id: socket.id, name: username || 'Jugador 2', score: 0, ready: false, pyramid: null, currentChoice: null, usedCols: [] });
       socket.join(roomId);
       io.to(roomId).emit('room_state', room);
       io.to(roomId).emit('start_construction');
@@ -149,8 +149,8 @@ function processBattleRound(roomId, io) {
   const p1 = room.players[0];
   const p2 = room.players[1];
   const level = room.currentLevel;
-
   const row = level - 1;
+
   const p1Token = p1.pyramid[`${row}-${p1.currentChoice}`];
   const p2Token = p2.pyramid[`${row}-${p2.currentChoice}`];
 
@@ -171,37 +171,19 @@ function processBattleRound(roomId, io) {
     room.logs.push(`Nivel ${level}: Empate entre ${TOKENS[p1Token].name}s. ${isSpecial ? `Bote: ${room.tiePot}` : ''}`);
   }
 
-  const p1Rem = [];
-  const p2Rem = [];
-  for (let c = 0; c < level; c++) {
-    if (c !== p1.currentChoice) p1Rem.push(p1.pyramid[`${row}-${c}`]);
-    if (c !== p2.currentChoice) p2Rem.push(p2.pyramid[`${row}-${c}`]);
-  }
-  
-  p2Rem.sort(() => Math.random() - 0.5);
-
-  for (let i = 0; i < p1Rem.length; i++) {
-    const escRes = resolveBattle(p1Rem[i], p2Rem[i], level);
-    const escBase = isSpecial ? 2 : 1;
-    const escPoints = escBase + (isSpecial ? room.tiePot : 0);
-    
-    if (escRes === 'WIN') {
-      p1.score += escPoints;
-      room.tiePot = 0;
-      room.logs.push(`Escaramuza: ${p1.name} (${TOKENS[p1Rem[i]].name}) vence a ${p2.name} (${TOKENS[p2Rem[i]].name})`);
-    } else if (escRes === 'LOSS') {
-      p2.score += escPoints;
-      room.tiePot = 0;
-      room.logs.push(`Escaramuza: ${p2.name} (${TOKENS[p2Rem[i]].name}) vence a ${p1.name} (${TOKENS[p1Rem[i]].name})`);
-    } else {
-      if (isSpecial) room.tiePot += 2;
-      room.logs.push(`Escaramuza: Empate entre ${TOKENS[p1Rem[i]].name}s. ${isSpecial ? `Bote: ${room.tiePot}` : ''}`);
-    }
-  }
+  // Marcar fichas como usadas
+  p1.usedCols.push(p1.currentChoice);
+  p2.usedCols.push(p2.currentChoice);
 
   p1.currentChoice = null;
   p2.currentChoice = null;
-  room.currentLevel += 1;
+
+  // Si ya han peleado todas las fichas de este nivel, avanzar de nivel
+  if (p1.usedCols.length === level) {
+    p1.usedCols = [];
+    p2.usedCols = [];
+    room.currentLevel += 1;
+  }
 
   io.to(roomId).emit('round_result', room);
 }
