@@ -1,5 +1,5 @@
 # Etapa 1: Construir el Frontend (React/Vite)
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copiar configuración y dependencias
@@ -11,7 +11,7 @@ COPY . .
 RUN npm run build
 
 # Etapa 2: Configurar el Servidor Backend (Node.js)
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 # Copiar y instalar dependencias del servidor
