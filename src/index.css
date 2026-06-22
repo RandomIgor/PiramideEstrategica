@@ -210,3 +210,37 @@ body {
   background: rgba(231, 76, 60, 0.1);
   border-left: 4px solid var(--color-accent);
 }
+
+/* Battle Pyramid Rows */
+.battle-row-active {
+  box-shadow: 0 0 15px rgba(230, 177, 42, 0.5);
+  border-radius: 12px;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.battle-row-past {
+  opacity: 0.4;
+  filter: grayscale(80%);
+  pointer-events: none;
+}
+
+.battle-row-future {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.battle-token {
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+}
+.battle-token:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+.battle-token.used {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}

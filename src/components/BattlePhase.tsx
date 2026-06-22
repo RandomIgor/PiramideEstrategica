@@ -79,38 +79,54 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     setActiveBattle(null);
   };
 
-  const renderCurrentRowTokens = () => {
-    if (currentLevel > mode.levels) return null;
-    const row = currentLevel - 1;
-    const tokens = [];
-    for (let c = 0; c < currentLevel; c++) {
-      const token = playerPyramid[`${row}-${c}`];
-      const isUsed = usedColsPlayer.includes(c);
-      tokens.push(
-        <button
-          key={c}
-          className="btn"
-          disabled={isUsed}
-          style={{
-            fontSize: 'var(--token-font)', padding: '0.8rem', background: isUsed ? 'transparent' : 'var(--glass-bg)',
-            border: '2px solid var(--color-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center',
-            flex: '1 1 auto', minWidth: 'var(--token-size)',
-            opacity: isUsed ? 0.2 : 1, cursor: isUsed ? 'default' : 'pointer'
-          }}
-          onClick={() => handleTokenSelect(c)}
+  const renderPyramid = () => {
+    const rows = [];
+    for (let r = 0; r < mode.levels; r++) {
+      const cols = r + 1;
+      const rowTokens = [];
+      
+      const isPastRow = r < currentLevel - 1;
+      const isFutureRow = r > currentLevel - 1;
+      const isActiveRow = r === currentLevel - 1;
+
+      for (let c = 0; c < cols; c++) {
+        const tokenKey = `${r}-${c}`;
+        const token = playerPyramid[tokenKey];
+        const isUsed = isActiveRow && usedColsPlayer.includes(c);
+
+        rowTokens.push(
+          <div
+            key={c}
+            className={`glass-panel battle-token ${isUsed ? 'used' : ''}`}
+            style={{
+              padding: '0.8rem', width: 'var(--token-size)', height: 'var(--token-size)',
+              display: 'flex', justifyContent: 'center', alignItems: 'center',
+              fontSize: 'var(--token-font)',
+              background: isUsed ? 'transparent' : 'var(--glass-bg)',
+              border: isActiveRow && !isUsed ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'
+            }}
+            onClick={() => {
+              if (isActiveRow && !isUsed && currentLevel <= mode.levels) {
+                handleTokenSelect(c);
+              }
+            }}
+          >
+            {TOKENS[token].icon}
+          </div>
+        );
+      }
+
+      rows.push(
+        <div 
+          key={r} 
+          className={isActiveRow && !isGameOver ? 'battle-row-active' : (isPastRow ? 'battle-row-past' : (isFutureRow ? 'battle-row-future' : ''))}
+          style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}
         >
-          {TOKENS[token].icon}
-          <span style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#ccc' }}>
-            {isUsed ? 'Usada' : 'Lanzar'}
-          </span>
-        </button>
+          {rowTokens}
+        </div>
       );
     }
-    return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
-        {tokens}
-      </div>
-    );
+    return <div style={{ marginTop: '2rem' }}>{rows}</div>;
   };
 
   const isGameOver = currentLevel > mode.levels;
@@ -140,14 +156,15 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
         {!isGameOver ? (
           <div style={{ textAlign: 'center' }}>
             <h3>Nivel Actual: {currentLevel} de {mode.levels}</h3>
-            <p style={{ color: '#aaa', marginTop: '0.5rem' }}>Selecciona una ficha para el próximo duelo de este nivel ({currentLevel - usedColsPlayer.length} restantes).</p>
-            {renderCurrentRowTokens()}
+            <p style={{ color: '#aaa', marginTop: '0.5rem', marginBottom: '1rem' }}>Selecciona una ficha para el próximo duelo de este nivel ({currentLevel - usedColsPlayer.length} restantes).</p>
+            {renderPyramid()}
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
             <h1 style={{ fontSize: '3rem', color: playerScore > botScore ? 'var(--color-primary)' : (playerScore < botScore ? 'var(--color-accent)' : 'white') }}>
               {playerScore > botScore ? '¡HAS GANADO!' : (playerScore < botScore ? '¡HAS PERDIDO!' : '¡EMPATE TÉCNICO!')}
             </h1>
+            {renderPyramid()}
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
               <button className="btn btn-secondary" onClick={() => setShowHistory(true)}>Ver Historial</button>
               <button className="btn btn-primary" onClick={onFinish}>Volver al Menú</button>
