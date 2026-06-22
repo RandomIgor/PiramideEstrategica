@@ -185,7 +185,17 @@ function processBattleRound(roomId, io) {
     room.currentLevel += 1;
   }
 
-  io.to(roomId).emit('round_result', room);
+  io.to(roomId).emit('round_result', {
+    room,
+    lastBattle: {
+      p1Id: p1.id,
+      p1Token,
+      p2Token,
+      result: res1, // 'WIN' means p1 won
+      points,
+      tiePot: room.tiePot
+    }
+  });
 }
 
 // Sirve los archivos estáticos generados por Vite

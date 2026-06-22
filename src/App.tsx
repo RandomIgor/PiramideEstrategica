@@ -34,6 +34,7 @@ function App() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [roomState, setRoomState] = useState<any>(null);
   const [socketError, setSocketError] = useState<string | null>(null);
+  const [lastBattleData, setLastBattleData] = useState<any>(null);
 
   // Firebase Auth Listener
   useEffect(() => {
@@ -68,7 +69,14 @@ function App() {
       setCurrentView('multiplayer-menu');
     });
     socket.on('battle_starts', () => setCurrentView('multiplayer-battle'));
-    socket.on('round_result', (state) => setRoomState(state));
+    socket.on('round_result', (payload) => {
+      if (payload.lastBattle) {
+        setLastBattleData(payload.lastBattle);
+        setRoomState(payload.room);
+      } else {
+        setRoomState(payload);
+      }
+    });
     socket.on('player_disconnected', () => {
       alert("El otro jugador se ha desconectado.");
       setCurrentView('menu');
@@ -281,6 +289,8 @@ function App() {
             roomState={roomState}
             playerId={socket.id as string}
             onFinish={() => setCurrentView('menu')}
+            lastBattleData={lastBattleData}
+            onClearBattle={() => setLastBattleData(null)}
           />
         </div>
       )}

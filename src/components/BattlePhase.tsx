@@ -19,83 +19,64 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
   const [usedColsPlayer, setUsedColsPlayer] = useState<number[]>([]);
   const [usedColsBot, setUsedColsBot] = useState<number[]>([]);
   
-  const [logs, setLogs] = useState<{ id: number, text: string, type: 'normal' | 'info' }[]>([]);
-  const [logCounter, setLogCounter] = useState(0);
+  const [history, setHistory] = useState<{
+    id: number; level: number; pToken: TokenType; bToken: TokenType; result: 'WIN' | 'LOSS' | 'TIE'; points: number;
+  }[]>([]);
 
-  const addLog = (text: string, type: 'normal' | 'info') => {
-    setLogs(prev => [{ id: logCounter, text, type }, ...prev]);
-    setLogCounter(c => c + 1);
-  };
+  const [activeBattle, setActiveBattle] = useState<{
+    playerToken: TokenType; botToken: TokenType; result: 'WIN' | 'LOSS' | 'TIE'; points: number; newTiePot: number; colIndex: number; botColIndex: number; levelObj: number;
+  } | null>(null);
 
-  // Auto-selección cuando solo queda 1 ficha
-  React.useEffect(() => {
-    if (currentLevel <= mode.levels && currentLevel - usedColsPlayer.length === 1) {
-      const remaining = Array.from({ length: currentLevel }, (_, i) => i).find(c => !usedColsPlayer.includes(c));
-      if (remaining !== undefined) {
-        const timer = setTimeout(() => handleTokenSelect(remaining), 1000);
-        return () => clearTimeout(timer);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usedColsPlayer.length, currentLevel]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleTokenSelect = (colIndex: number) => {
-    if (usedColsPlayer.includes(colIndex)) return;
+    if (usedColsPlayer.includes(colIndex) || activeBattle) return;
 
     const row = currentLevel - 1;
     const playerKey = `${row}-${colIndex}`;
     const playerToken = playerPyramid[playerKey];
 
-    // 1. Bot chooses randomly from its REMAINING row
     const botCols = Array.from({ length: currentLevel }, (_, i) => i).filter(c => !usedColsBot.includes(c));
     const botChoiceCol = botCols[Math.floor(Math.random() * botCols.length)];
     const botTokenKey = `${row}-${botChoiceCol}`;
     const botToken = botPyramid[botTokenKey];
 
-    // 2. Resolve Normal Battle
     const result = resolveBattle(playerToken, botToken, currentLevel);
-    let newPlayerScore = playerScore;
-    let newBotScore = botScore;
-    let newTiePot = tiePot;
-
     const basePoints = 1;
     const isSpecial = mode.isSpecialRules;
-    const pointsToAward = basePoints + (isSpecial ? tiePot : 0);
+    const pointsToAward = basePoints + (isSpecial && result !== 'TIE' ? tiePot : 0);
+    const newTiePot = result === 'TIE' && isSpecial ? tiePot + 1 : 0;
 
-    if (result === 'WIN') {
-      newPlayerScore += pointsToAward;
-      newTiePot = 0;
-      addLog(`Duelo Nivel ${currentLevel}: Tu ${TOKENS[playerToken].name} VENCE al ${TOKENS[botToken].name} rival! (+${pointsToAward} pt)`, 'normal');
-    } else if (result === 'LOSS') {
-      newBotScore += pointsToAward;
-      newTiePot = 0;
-      addLog(`Duelo Nivel ${currentLevel}: Tu ${TOKENS[playerToken].name} PIERDE ante el ${TOKENS[botToken].name} rival!`, 'normal');
-    } else {
-      if (isSpecial) newTiePot += 1;
-      addLog(`Duelo Nivel ${currentLevel}: ¡EMPATE entre ${TOKENS[playerToken].name}s! ${isSpecial ? `Bote acumulado a ${newTiePot}` : ''}`, 'normal');
-    }
+    setActiveBattle({
+      playerToken, botToken, result, points: pointsToAward, newTiePot, colIndex, botColIndex: botChoiceCol, levelObj: currentLevel
+    });
+  };
 
-    setPlayerScore(newPlayerScore);
-    setBotScore(newBotScore);
-    setTiePot(newTiePot);
+  const handleContinue = () => {
+    if (!activeBattle) return;
+    
+    setHistory(prev => [{
+      id: prev.length, level: activeBattle.levelObj,
+      pToken: activeBattle.playerToken, bToken: activeBattle.botToken,
+      result: activeBattle.result, points: activeBattle.points
+    }, ...prev]);
 
-    const newUsedP = [...usedColsPlayer, colIndex];
-    const newUsedB = [...usedColsBot, botChoiceCol];
+    if (activeBattle.result === 'WIN') setPlayerScore(s => s + activeBattle.points);
+    if (activeBattle.result === 'LOSS') setBotScore(s => s + activeBattle.points);
+    setTiePot(activeBattle.newTiePot);
 
-    if (newUsedP.length === currentLevel) {
+    const newUsedP = [...usedColsPlayer, activeBattle.colIndex];
+    const newUsedB = [...usedColsBot, activeBattle.botColIndex];
+
+    if (newUsedP.length === activeBattle.levelObj) {
       setUsedColsPlayer([]);
       setUsedColsBot([]);
-      if (currentLevel < mode.levels) {
-        setCurrentLevel(currentLevel + 1);
-        addLog(`-- Avanzando al Nivel ${currentLevel + 1} --`, 'info');
-      } else {
-        setCurrentLevel(currentLevel + 1); // Game over state
-        addLog(`-- PARTIDA FINALIZADA --`, 'info');
-      }
+      setCurrentLevel(activeBattle.levelObj + 1);
     } else {
       setUsedColsPlayer(newUsedP);
       setUsedColsBot(newUsedB);
     }
+    setActiveBattle(null);
   };
 
   const renderCurrentRowTokens = () => {
@@ -135,10 +116,8 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
   const isGameOver = currentLevel > mode.levels;
 
   return (
-    <div className="glass-panel responsive-split animate-fade-in" style={{ width: '100%', maxWidth: '900px' }}>
-      
-      {/* Tablero Izquierdo */}
-      <div style={{ flex: '1 1 300px' }}>
+    <>
+      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '900px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>Fase de Batallas</h2>
         
         <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
@@ -169,31 +148,73 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
             <h1 style={{ fontSize: '3rem', color: playerScore > botScore ? 'var(--color-primary)' : (playerScore < botScore ? 'var(--color-accent)' : 'white') }}>
               {playerScore > botScore ? '¡HAS GANADO!' : (playerScore < botScore ? '¡HAS PERDIDO!' : '¡EMPATE TÉCNICO!')}
             </h1>
-            <button className="btn btn-primary" style={{ marginTop: '2rem' }} onClick={onFinish}>Volver al Menú</button>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+              <button className="btn btn-secondary" onClick={() => setShowHistory(true)}>Ver Historial</button>
+              <button className="btn btn-primary" onClick={onFinish}>Volver al Menú</button>
+            </div>
+          </div>
+        )}
+
+        {!isGameOver && (
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <button className="btn btn-secondary" onClick={() => setShowHistory(true)}>Historial de Batallas</button>
           </div>
         )}
       </div>
 
-      {/* Panel Derecho (Logs) */}
-      <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
-        <h3 style={{ marginBottom: '1rem' }}>Registro de Batalla</h3>
-        <div style={{ flex: 1, maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {logs.length === 0 && <p style={{ color: '#666', fontStyle: 'italic' }}>Las batallas aparecerán aquí...</p>}
-          {logs.map(log => (
-            <div key={log.id} style={{
-              padding: '0.8rem',
-              borderRadius: '8px',
-              fontSize: '0.9rem',
-              background: log.type === 'normal' ? 'rgba(230, 177, 42, 0.1)' : 'transparent',
-              borderLeft: log.type === 'normal' ? '3px solid var(--color-primary)' : 'none',
-              color: log.type === 'info' ? 'var(--color-secondary-light)' : 'white'
-            }}>
-              {log.text}
+      {activeBattle && (
+        <div className="modal-overlay">
+          <div className="modal-content scale-in">
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: activeBattle.result === 'WIN' ? 'var(--color-primary)' : (activeBattle.result === 'LOSS' ? 'var(--color-accent)' : 'white') }}>
+              {activeBattle.result === 'WIN' ? '¡TÚ GANAS!' : (activeBattle.result === 'LOSS' ? '¡RIVAL GANA!' : '¡EMPATE!')}
+            </h2>
+            <p style={{ fontSize: '1.2rem', color: '#ccc' }}>
+              {activeBattle.result === 'TIE' && mode.isSpecialRules ? `Bote acumulado a: ${activeBattle.newTiePot}` : (activeBattle.result === 'TIE' ? 'Nadie suma puntos' : `+${activeBattle.points} Puntos`)}
+            </p>
+            
+            <div className="battle-vs-container">
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '4rem', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3))' }}>{TOKENS[activeBattle.playerToken].icon}</div>
+                <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>Tú</p>
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#666', fontStyle: 'italic' }}>VS</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '4rem', filter: 'drop-shadow(0 0 10px rgba(231,76,60,0.3))' }}>{TOKENS[activeBattle.botToken].icon}</div>
+                <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>Rival</p>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-    </div>
+            <button className="btn btn-primary" style={{ width: '100%', fontSize: '1.2rem' }} onClick={handleContinue}>Continuar</button>
+          </div>
+        </div>
+      )}
+
+      {showHistory && (
+        <div className="modal-overlay" onClick={() => setShowHistory(false)}>
+          <div className="modal-content scale-in" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <h2 style={{ marginBottom: '1.5rem', color: 'var(--color-secondary)' }}>Historial de Batallas</h2>
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+              {history.length === 0 && <p style={{ color: '#aaa', fontStyle: 'italic' }}>Aún no hay batallas registradas.</p>}
+              {history.map(h => (
+                <div key={h.id} className={`history-item ${h.result === 'WIN' ? 'win' : (h.result === 'LOSS' ? 'loss' : '')}`}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontSize: '2rem' }}>{TOKENS[h.pToken].icon}</span>
+                    <span style={{ color: '#666', fontWeight: 'bold' }}>vs</span>
+                    <span style={{ fontSize: '2rem' }}>{TOKENS[h.bToken].icon}</span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: h.result === 'WIN' ? 'var(--color-primary)' : (h.result === 'LOSS' ? 'var(--color-accent)' : '#aaa') }}>
+                      {h.result === 'WIN' ? 'GANAS' : (h.result === 'LOSS' ? 'PIERDES' : 'EMPATE')}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#888' }}>Nivel {h.level}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-secondary" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setShowHistory(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
