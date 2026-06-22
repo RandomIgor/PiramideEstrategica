@@ -41,7 +41,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     const botTokenKey = `${row}-${botChoiceCol}`;
     const botToken = botPyramid[botTokenKey];
 
-    const result = resolveBattle(playerToken, botToken, currentLevel);
+    const result = resolveBattle(playerToken, botToken, currentLevel, mode);
     const basePoints = 1;
     const isSpecial = mode.isSpecialRules;
     const pointsToAward = basePoints + (isSpecial && result !== 'TIE' ? tiePot : 0);
@@ -120,7 +120,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
         <div 
           key={r} 
           className={isActiveRow && !isGameOver ? 'battle-row-active' : (isPastRow ? 'battle-row-past' : (isFutureRow ? 'battle-row-future' : ''))}
-          style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}
+          style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem', width: 'fit-content', margin: '0 auto 0.5rem auto' }}
         >
           {rowTokens}
         </div>

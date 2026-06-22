@@ -1,14 +1,26 @@
 import { TOKENS } from '../constants/game';
-import type { TokenType } from '../constants/game';
+import type { TokenType, GameMode } from '../constants/game';
 
 export type BattleResult = 'WIN' | 'LOSS' | 'TIE';
 
-export const resolveBattle = (player: TokenType, bot: TokenType, level: number): BattleResult => {
+export const resolveBattle = (player: TokenType, bot: TokenType, level: number, mode: GameMode): BattleResult => {
   if (player === bot) return 'TIE';
 
+  // Find the weakest token in this mode's inventory
+  let weakestToken: TokenType | null = null;
+  let minVal = Infinity;
+  Object.entries(mode.inventory).forEach(([type, count]) => {
+    if (count > 0 && TOKENS[type as TokenType].value < minVal) {
+      minVal = TOKENS[type as TokenType].value;
+      weakestToken = type as TokenType;
+    }
+  });
+
   // Regla Especial: PLAGA
-  if (player === 'ESCARABAJO' && bot === 'SOL') return 'WIN';
-  if (bot === 'ESCARABAJO' && player === 'SOL') return 'LOSS';
+  if (weakestToken) {
+    if (player === weakestToken && bot === 'SOL') return 'WIN';
+    if (bot === weakestToken && player === 'SOL') return 'LOSS';
+  }
 
   // Regla Especial: GATO MÍSTICO (Modo Keops)
   // En Nivel 1 pierde contra todos. En Nivel N, pierde contra (6 - N + 1).

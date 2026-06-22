@@ -249,3 +249,26 @@ body {
   cursor: default;
   pointer-events: none;
 }
+
+/* Inventory Tokens */
+.inventory-token {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.8rem;
+  background: var(--glass-bg);
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+  transition: transform 0.2s, background 0.2s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  font-size: var(--token-font);
+}
+@media (hover: hover) {
+  .inventory-token:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

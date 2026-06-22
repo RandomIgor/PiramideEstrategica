@@ -162,33 +162,29 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
         <p style={{ color: '#ccc', fontSize: '0.9rem', marginTop: '0.5rem' }}>Arrastra o <b>haz clic</b> en las fichas para colocarlas. Pulsa en una ficha de la pirámide para quitarla.</p>
       </div>
 
-      <div className="inventory-section" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', padding: '1.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '16px', minHeight: '100px' }}>
-        {(Object.entries(inventory) as [TokenType, number][]).map(([type, count]) => {
-          if (count === 0) return null;
-          const token = TOKENS[type];
-          return (
-            <div 
-              key={type}
-              draggable={!isTouchDevice}
-              onDragStart={(e) => handleDragStart(e, type, 'inventory')}
-              onClick={() => handleInventoryClick(type)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                padding: '0.5rem 0.8rem', background: 'var(--glass-bg)', borderRadius: '12px',
-                cursor: 'pointer', border: '1px solid var(--glass-border)',
-                transition: 'transform 0.2s',
-                touchAction: 'manipulation',
-                userSelect: 'none'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <span style={{ fontSize: 'var(--token-font)', userSelect: 'none' }}>{token.icon}</span>
-              <span style={{ fontSize: '1rem', marginTop: '8px', fontWeight: 'bold' }}>x{count}</span>
-            </div>
-          );
-        })}
-        {isComplete && <div style={{ color: 'var(--color-primary)', fontStyle: 'italic', padding: '1rem', fontSize: '1.2rem' }}>¡Inventario vacío! La pirámide está lista.</div>}
+      <div className="inventory-section" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', padding: '1.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '16px', minHeight: '100px' }}>
+        {(() => {
+          const items: React.ReactNode[] = [];
+          (Object.entries(inventory) as [TokenType, number][]).forEach(([type, count]) => {
+            const token = TOKENS[type];
+            for (let i = 0; i < count; i++) {
+              items.push(
+                <div 
+                  key={`${type}-${i}`}
+                  className="inventory-token"
+                  draggable={!isTouchDevice}
+                  onDragStart={(e) => handleDragStart(e, type, 'inventory')}
+                  onClick={() => handleInventoryClick(type)}
+                  title={token.name}
+                >
+                  {token.icon}
+                </div>
+              );
+            }
+          });
+          return items;
+        })()}
+        {isComplete && <div style={{ color: 'var(--color-primary)', fontStyle: 'italic', padding: '1rem', fontSize: '1.2rem', width: '100%', textAlign: 'center' }}>¡Inventario vacío! La pirámide está lista.</div>}
       </div>
 
       <div className="pyramid-section" style={{ padding: '1rem 0' }}>

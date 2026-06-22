@@ -42,10 +42,26 @@ const TOKENS = {
   GATO: { value: 6, name: 'Gato Místico' }
 };
 
-const resolveBattle = (playerToken, botToken, level) => {
+const resolveBattle = (playerToken, botToken, level, mode) => {
   if (playerToken === botToken) return 'TIE';
-  if (playerToken === 'ESCARABAJO' && botToken === 'SOL') return 'WIN';
-  if (botToken === 'ESCARABAJO' && playerToken === 'SOL') return 'LOSS';
+
+  let weakestToken = null;
+  let minVal = Infinity;
+  if (mode && mode.inventory) {
+    for (const type in mode.inventory) {
+      if (mode.inventory[type] > 0 && TOKENS[type].value < minVal) {
+        minVal = TOKENS[type].value;
+        weakestToken = type;
+      }
+    }
+  } else {
+    weakestToken = 'ESCARABAJO';
+  }
+
+  if (weakestToken) {
+    if (playerToken === weakestToken && botToken === 'SOL') return 'WIN';
+    if (botToken === weakestToken && playerToken === 'SOL') return 'LOSS';
+  }
 
   const gatoLosesToValue = 6 - level + 1;
   if (playerToken === 'GATO') {
@@ -154,7 +170,7 @@ function processBattleRound(roomId, io) {
   const p1Token = p1.pyramid[`${row}-${p1.currentChoice}`];
   const p2Token = p2.pyramid[`${row}-${p2.currentChoice}`];
 
-  const res1 = resolveBattle(p1Token, p2Token, level);
+  const res1 = resolveBattle(p1Token, p2Token, level, room.mode);
   const isSpecial = room.mode.isSpecialRules;
   let points = 1 + (isSpecial ? room.tiePot : 0);
   

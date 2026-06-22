@@ -95,7 +95,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
         <div 
           key={r} 
           className={isActiveRow && !isGameOver ? 'battle-row-active' : (isPastRow ? 'battle-row-past' : (isFutureRow ? 'battle-row-future' : ''))}
-          style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}
+          style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem', width: 'fit-content', margin: '0 auto 0.5rem auto' }}
         >
           {rowTokens}
         </div>
