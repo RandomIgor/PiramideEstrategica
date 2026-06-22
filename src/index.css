@@ -234,10 +234,15 @@ body {
 .battle-token {
   cursor: pointer;
   transition: transform 0.2s, filter 0.2s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.battle-token:hover {
-  transform: scale(1.1);
-  filter: brightness(1.2);
+@media (hover: hover) {
+  .battle-token:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+  }
 }
 .battle-token.used {
   opacity: 0.2;
