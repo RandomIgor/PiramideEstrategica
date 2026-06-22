@@ -12,7 +12,7 @@ import { RoomBrowser } from './components/RoomBrowser';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { GameMode, TokenType } from './constants/game';
 import { generateBotPyramid } from './utils/battle';
 
@@ -204,7 +204,23 @@ function App() {
     <div className="app-container">
       {user && username && (
         <div style={{ position: 'absolute', top: '1.5rem', right: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 100 }}>
-          <span style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>👤 {username}</span>
+          <div 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', transition: 'background 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} 
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            onClick={async () => {
+              const newName = window.prompt("Introduce tu nuevo nombre de faraón:", username);
+              if (newName && newName.trim() !== "" && newName.trim() !== username) {
+                const finalName = newName.trim();
+                await setDoc(doc(db, 'users', user.uid), { username: finalName }, { merge: true });
+                setUsername(finalName);
+              }
+            }}
+            title="Cambiar Nombre"
+          >
+            <span style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>👤 {username}</span>
+            <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>✏️</span>
+          </div>
           <button onClick={handleSignOut} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', color: '#ccc', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}>Salir</button>
         </div>
       )}
