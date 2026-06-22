@@ -210,7 +210,7 @@ function processBattleRound(roomId, io) {
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // Redirige cualquier otra ruta a index.html (React Router)
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
