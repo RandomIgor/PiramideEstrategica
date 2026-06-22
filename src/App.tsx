@@ -210,12 +210,12 @@ function App() {
         <ModeSelector onSelectMode={handleSelectMode} onBack={() => setCurrentView('menu')} />
       )}
       {currentView === 'multiplayer-menu' && (
-        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'row', gap: '2rem', maxWidth: '1200px', width: '100%', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <div style={{ flex: '1 1 400px', maxWidth: '600px' }}>
+        <div className="responsive-split animate-fade-in">
+          <div style={{ flex: '1 1 300px', maxWidth: '600px', width: '100%' }}>
             <h3 style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--color-primary)' }}>Crear Partida</h3>
             <ModeSelector isMultiplayer={true} onSelectMode={handleCreateRoom} onBack={() => setCurrentView('menu')} />
           </div>
-          <div style={{ flex: '1 1 400px', maxWidth: '600px' }}>
+          <div style={{ flex: '1 1 300px', maxWidth: '600px', width: '100%' }}>
             {socketError && <p style={{ color: 'var(--color-accent)', textAlign: 'center', marginBottom: '1rem' }}>{socketError}</p>}
             <RoomBrowser socket={socket} onJoinRoom={handleJoinRoom} onBack={() => setCurrentView('menu')} />
           </div>

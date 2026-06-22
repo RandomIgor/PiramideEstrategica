@@ -114,8 +114,9 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
           key={c}
           className="btn"
           style={{
-            fontSize: '2rem', padding: '1rem', background: 'var(--glass-bg)',
-            border: '2px solid var(--color-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center'
+            fontSize: 'var(--token-font)', padding: '0.8rem', background: 'var(--glass-bg)',
+            border: '2px solid var(--color-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center',
+            flex: '1 1 auto', minWidth: 'var(--token-size)'
           }}
           onClick={() => handleTokenSelect(c)}
         >
@@ -125,7 +126,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
       );
     }
     return (
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
         {tokens}
       </div>
     );
@@ -134,10 +135,10 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
   const isGameOver = currentLevel > mode.levels;
 
   return (
-    <div className="glass-panel animate-fade-in" style={{ padding: '2rem', width: '100%', maxWidth: '900px', display: 'flex', gap: '2rem' }}>
+    <div className="glass-panel responsive-split animate-fade-in" style={{ width: '100%', maxWidth: '900px' }}>
       
       {/* Tablero Izquierdo */}
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: '1 1 300px' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>Fase de Batallas</h2>
         
         <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
@@ -174,7 +175,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
       </div>
 
       {/* Panel Derecho (Logs) */}
-      <div style={{ flex: 1, borderLeft: '1px solid var(--glass-border)', paddingLeft: '2rem', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ marginBottom: '1rem' }}>Registro de Batalla</h3>
         <div style={{ flex: 1, maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {logs.length === 0 && <p style={{ color: '#666', fontStyle: 'italic' }}>Las batallas aparecerán aquí...</p>}

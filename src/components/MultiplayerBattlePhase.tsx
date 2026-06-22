@@ -62,8 +62,9 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
           className="btn"
           disabled={me.currentChoice !== null}
           style={{
-            fontSize: '2rem', padding: '1rem', background: me.currentChoice === c ? 'var(--color-primary)' : 'var(--glass-bg)',
+            fontSize: 'var(--token-font)', padding: '0.8rem', background: me.currentChoice === c ? 'var(--color-primary)' : 'var(--glass-bg)',
             border: '2px solid var(--color-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center',
+            flex: '1 1 auto', minWidth: 'var(--token-size)',
             opacity: (me.currentChoice !== null && me.currentChoice !== c) ? 0.5 : 1,
             cursor: me.currentChoice !== null ? 'default' : 'pointer'
           }}
@@ -77,7 +78,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
       );
     }
     return (
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
         {tokens}
       </div>
     );
@@ -86,8 +87,8 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
   const isGameOver = roomState.currentLevel > roomState.mode.levels;
 
   return (
-    <div className="glass-panel animate-fade-in" style={{ padding: '2rem', width: '100%', maxWidth: '900px', display: 'flex', gap: '2rem' }}>
-      <div style={{ flex: 1 }}>
+    <div className="glass-panel responsive-split animate-fade-in" style={{ width: '100%', maxWidth: '900px' }}>
+      <div style={{ flex: '1 1 300px' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>Fase de Batallas (Online)</h2>
         
         <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
@@ -128,7 +129,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
         )}
       </div>
 
-      <div style={{ flex: 1, borderLeft: '1px solid var(--glass-border)', paddingLeft: '2rem', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ marginBottom: '1rem' }}>Registro de Batalla</h3>
         <div style={{ flex: 1, maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {roomState.logs.length === 0 && <p style={{ color: '#666', fontStyle: 'italic' }}>Las batallas aparecerán aquí...</p>}
