@@ -14,6 +14,9 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
   // State for the pyramid grid (key: "row-col", value: TokenType)
   const [pyramid, setPyramid] = useState<Record<string, TokenType>>({});
 
+  // Detect touch device to disable drag and drop which ruins touch clicks
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
   const handleDragStart = (e: React.DragEvent, type: TokenType, source: 'inventory' | string) => {
     e.dataTransfer.setData('tokenType', type);
     e.dataTransfer.setData('source', source);
@@ -126,15 +129,17 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
             cursor: token ? 'pointer' : 'default',
             margin: '0 4px',
             boxShadow: token ? '0 4px 12px rgba(0,0,0,0.3) inset' : 'none',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            touchAction: 'manipulation',
+            userSelect: 'none'
           }}
         >
           {token ? (
             <div 
-              draggable 
+              draggable={!isTouchDevice}
               onDragStart={(e) => handleDragStart(e, token, key)}
               title={TOKENS[token].name}
-              style={{ cursor: 'grab', userSelect: 'none' }}
+              style={{ cursor: isTouchDevice ? 'pointer' : 'grab', userSelect: 'none', pointerEvents: 'none' }}
             >
               {TOKENS[token].icon}
             </div>
@@ -164,14 +169,16 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
           return (
             <div 
               key={type}
-              draggable
+              draggable={!isTouchDevice}
               onDragStart={(e) => handleDragStart(e, type, 'inventory')}
               onClick={() => handleInventoryClick(type)}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
                 padding: '0.5rem 0.8rem', background: 'var(--glass-bg)', borderRadius: '12px',
                 cursor: 'pointer', border: '1px solid var(--glass-border)',
-                transition: 'transform 0.2s'
+                transition: 'transform 0.2s',
+                touchAction: 'manipulation',
+                userSelect: 'none'
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
