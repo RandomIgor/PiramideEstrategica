@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import { io } from 'socket.io-client';
 import { ModeSelector } from './components/ModeSelector';
+import { DraftPhase } from './components/DraftPhase';
 import { ConstructionPhase } from './components/ConstructionPhase';
 import { BattlePhase } from './components/BattlePhase';
 import { MultiplayerBattlePhase } from './components/MultiplayerBattlePhase';
@@ -24,10 +25,11 @@ function App() {
   const [username, setUsername] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const [currentView, setCurrentView] = useState<'menu' | 'battle' | 'special' | 'learn' | 'construction' | 'battle-phase' | 'manual' | 'multiplayer-menu' | 'multiplayer-lobby' | 'multiplayer-battle' | 'leaderboard'>('menu');
+  const [currentView, setCurrentView] = useState<'menu' | 'battle' | 'special' | 'learn' | 'draft' | 'construction' | 'battle-phase' | 'manual' | 'multiplayer-menu' | 'multiplayer-lobby' | 'multiplayer-battle' | 'leaderboard'>('menu');
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
   const [playerPyramid, setPlayerPyramid] = useState<Record<string, TokenType> | null>(null);
   const [botPyramid, setBotPyramid] = useState<Record<string, TokenType> | null>(null);
+  const [botDraftInventory, setBotDraftInventory] = useState<Record<TokenType, number> | null>(null);
   
   // Multiplayer State
   const [isMultiplayer, setIsMultiplayer] = useState(false);
@@ -98,7 +100,11 @@ function App() {
   const handleSelectMode = (mode: GameMode) => {
     setSelectedMode(mode);
     setIsMultiplayer(false);
-    setCurrentView('construction');
+    if (mode.rules?.extendedRules) {
+      setCurrentView('draft');
+    } else {
+      setCurrentView('construction');
+    }
   };
 
   const handleCreateRoom = (mode: GameMode, isPrivate?: boolean) => {
@@ -265,6 +271,21 @@ function App() {
           </div>
         </div>
       )}
+      {currentView === 'draft' && selectedMode && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          <DraftPhase 
+            mode={selectedMode}
+            onComplete={(pInv, bInv) => {
+              setSelectedMode({ ...selectedMode, inventory: pInv });
+              setBotDraftInventory(bInv);
+              setCurrentView('construction');
+            }}
+          />
+          <button className="btn" style={{ marginTop: '1rem', background: 'transparent', color: '#ccc', border: '1px solid #555' }} onClick={() => setCurrentView('menu')}>
+            Abandonar Draft
+          </button>
+        </div>
+      )}
       {currentView === 'construction' && selectedMode && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
           <ConstructionPhase 
@@ -275,7 +296,7 @@ function App() {
                 setPlayerPyramid(pyramid);
                 setCurrentView('multiplayer-lobby'); // Will change to battle when both ready
               } else {
-                const bPyramid = generateBotPyramid(selectedMode.levels, selectedMode.inventory);
+                const bPyramid = generateBotPyramid(selectedMode.levels, botDraftInventory || selectedMode.inventory);
                 setPlayerPyramid(pyramid);
                 setBotPyramid(bPyramid);
                 setCurrentView('battle-phase');
