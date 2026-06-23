@@ -45,7 +45,8 @@ export const GAME_MODES: GameMode[] = [
       DEVOTO: 2,
       SIERVO: 0,
       ESCARABAJO: 3,
-      GATO: 0
+      GATO: 0,
+      ESPEJISMO: 0
     }
   },
   {
@@ -60,7 +61,8 @@ export const GAME_MODES: GameMode[] = [
       DEVOTO: 3,
       SIERVO: 0,
       ESCARABAJO: 4,
-      GATO: 0
+      GATO: 0,
+      ESPEJISMO: 0
     }
   },
   {
@@ -75,7 +77,8 @@ export const GAME_MODES: GameMode[] = [
       DEVOTO: 3,
       SIERVO: 4,
       ESCARABAJO: 5,
-      GATO: 0
+      GATO: 0,
+      ESPEJISMO: 0
     }
   },
   {
@@ -90,7 +93,8 @@ export const GAME_MODES: GameMode[] = [
       DEVOTO: 4,
       SIERVO: 5,
       ESCARABAJO: 6,
-      GATO: 1
+      GATO: 1,
+      ESPEJISMO: 0
     }
   }
 ];
