@@ -20,9 +20,7 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
   const checkNeighbors = (r: number, c: number, type: TokenType, currentPyramid: Record<string, TokenType>): boolean => {
     if (!mode.rules?.extendedRules) return true;
     const neighbors = [
-      `${r}-${c - 1}`, `${r}-${c + 1}`,
-      `${r - 1}-${c - 1}`, `${r - 1}-${c}`,
-      `${r + 1}-${c}`, `${r + 1}-${c + 1}`
+      `${r}-${c - 1}`, `${r}-${c + 1}` // Solo comprobamos los lados (misma fila) para que sea jugable
     ];
     return !neighbors.some(key => currentPyramid[key] === type);
   };

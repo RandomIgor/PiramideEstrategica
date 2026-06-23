@@ -11,6 +11,7 @@ interface BattlePhaseProps {
 }
 
 export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, botPyramid, onFinish }) => {
+  const [localPlayerPyramid, setLocalPlayerPyramid] = useState<Record<string, TokenType>>(playerPyramid);
   const [currentLevel, setCurrentLevel] = useState(1); // 1 to mode.levels
   const [playerScore, setPlayerScore] = useState(0);
   const [botScore, setBotScore] = useState(0);
@@ -29,12 +30,54 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
 
   const [showHistory, setShowHistory] = useState(false);
 
+  // Habilidades (Modo Extendido)
+  const [usedHorus, setUsedHorus] = useState(false);
+  const [usedThot, setUsedThot] = useState(false);
+  const [revealedBotCols, setRevealedBotCols] = useState<number[]>([]);
+  const [isThotActive, setIsThotActive] = useState(false);
+  const [thotFirstPick, setThotFirstPick] = useState<number | null>(null);
+
+  const handleHorus = () => {
+    if (usedHorus) return;
+    const available = Array.from({ length: currentLevel }, (_, i) => i).filter(c => !usedColsBot.includes(c) && !revealedBotCols.includes(c));
+    if (available.length > 0) {
+      const pick = available[Math.floor(Math.random() * available.length)];
+      setRevealedBotCols([...revealedBotCols, pick]);
+    }
+    setUsedHorus(true);
+  };
+
+  const handleThotSelect = (colIndex: number) => {
+    if (thotFirstPick === null) {
+      setThotFirstPick(colIndex);
+    } else {
+      if (thotFirstPick !== colIndex) {
+        const row = currentLevel - 1;
+        const key1 = `${row}-${thotFirstPick}`;
+        const key2 = `${row}-${colIndex}`;
+        const newPyramid = { ...localPlayerPyramid };
+        const temp = newPyramid[key1];
+        newPyramid[key1] = newPyramid[key2];
+        newPyramid[key2] = temp;
+        setLocalPlayerPyramid(newPyramid);
+      }
+      setIsThotActive(false);
+      setThotFirstPick(null);
+      setUsedThot(true);
+    }
+  };
+
   const handleTokenSelect = (colIndex: number) => {
     if (usedColsPlayer.includes(colIndex) || activeBattle) return;
+    
+    if (isThotActive) {
+      handleThotSelect(colIndex);
+      return;
+    }
 
     const row = currentLevel - 1;
     const playerKey = `${row}-${colIndex}`;
-    const playerToken = playerPyramid[playerKey];
+    const playerToken = localPlayerPyramid[playerKey];
 
     const botCols = Array.from({ length: currentLevel }, (_, i) => i).filter(c => !usedColsBot.includes(c));
     const botChoiceCol = botCols[Math.floor(Math.random() * botCols.length)];
@@ -79,6 +122,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     if (newUsedP.length === activeBattle.levelObj) {
       setUsedColsPlayer([]);
       setUsedColsBot([]);
+      setRevealedBotCols([]);
       setCurrentLevel(activeBattle.levelObj + 1);
     } else {
       setUsedColsPlayer(newUsedP);
@@ -99,8 +143,9 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
 
       for (let c = 0; c < cols; c++) {
         const tokenKey = `${r}-${c}`;
-        const token = playerPyramid[tokenKey];
+        const token = localPlayerPyramid[tokenKey];
         const isUsed = isActiveRow && usedColsPlayer.includes(c);
+        const isThotSelected = isThotActive && thotFirstPick === c;
 
         rowTokens.push(
           <div
@@ -110,8 +155,11 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
               padding: '0.8rem', width: 'var(--token-size)', height: 'var(--token-size)',
               display: 'flex', justifyContent: 'center', alignItems: 'center',
               fontSize: 'var(--token-font)',
-              background: isUsed ? 'transparent' : 'var(--glass-bg)',
-              border: isActiveRow && !isUsed ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'
+              background: isUsed ? 'transparent' : (isThotSelected ? 'rgba(46, 204, 113, 0.3)' : 'var(--glass-bg)'),
+              border: isThotSelected ? '2px solid #2ecc71' : (isActiveRow && !isUsed ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'),
+              cursor: (isActiveRow && !isUsed) ? 'pointer' : 'default',
+              transition: 'all 0.2s',
+              boxShadow: isThotSelected ? '0 0 15px rgba(46, 204, 113, 0.5)' : 'none'
             }}
             onClick={() => {
               if (isActiveRow && !isUsed && currentLevel <= mode.levels) {
@@ -162,7 +210,42 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
         </div>
 
         {!isGameOver ? (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', width: '100%' }}>
+            {mode.rules?.extendedRules && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button 
+                  className={`btn ${usedHorus ? 'btn-secondary' : 'btn-primary'}`} 
+                  disabled={usedHorus || activeBattle !== null}
+                  onClick={handleHorus}
+                  style={{ opacity: usedHorus ? 0.5 : 1, padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                >
+                  👁️ Ojo de Horus {usedHorus && '(Usado)'}
+                </button>
+                <button 
+                  className={`btn ${usedThot ? 'btn-secondary' : (isThotActive ? 'btn-accent' : 'btn-primary')}`} 
+                  disabled={usedThot || activeBattle !== null}
+                  onClick={() => setIsThotActive(!isThotActive)}
+                  style={{ opacity: usedThot ? 0.5 : 1, padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                >
+                  🔄 Dios Thot {usedThot && '(Usado)'} {isThotActive && '(Activo)'}
+                </button>
+              </div>
+            )}
+            
+            {isThotActive && <p style={{ color: '#2ecc71', fontWeight: 'bold', marginBottom: '1rem', animation: 'pulse 2s infinite' }}>Selecciona dos fichas de esta fila para intercambiarlas.</p>}
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem', minHeight: '60px' }}>
+              {Array.from({ length: currentLevel }).map((_, c) => {
+                const isRevealed = revealedBotCols.includes(c);
+                const isUsed = usedColsBot.includes(c);
+                return (
+                  <div key={`bot-${c}`} style={{ width: '50px', height: '50px', border: '1px solid var(--color-accent)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: isUsed ? 'transparent' : 'rgba(231, 76, 60, 0.2)', opacity: isUsed ? 0.2 : 1 }}>
+                    {isRevealed && !isUsed ? <span style={{ fontSize: '1.5rem' }}>{TOKENS[botPyramid[`${currentLevel - 1}-${c}`]].icon}</span> : (isUsed ? '' : '❓')}
+                  </div>
+                );
+              })}
+            </div>
+
             <h3>Nivel Actual: {currentLevel} de {mode.levels}</h3>
             <p style={{ color: '#aaa', marginTop: '0.5rem', marginBottom: '1rem' }}>Selecciona una ficha para el próximo duelo de este nivel ({currentLevel - usedColsPlayer.length} restantes).</p>
             {renderPyramid()}
