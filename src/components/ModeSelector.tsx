@@ -9,8 +9,7 @@ interface ModeSelectorProps {
 }
 
 export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack, isMultiplayer }) => {
-  const [useTiePot, setUseTiePot] = useState(false);
-  const [useSkirmish, setUseSkirmish] = useState(false);
+  const [isExtended, setIsExtended] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
 
   return (
@@ -20,26 +19,24 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack
         <button className="btn" style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--glass-border)', color: 'white' }} onClick={onBack}>Volver</button>
       </div>
 
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <div 
+          onClick={() => setIsExtended(false)}
+          style={{ padding: '1rem', flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: '8px', border: !isExtended ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)', background: !isExtended ? 'rgba(230,177,42,0.1)' : 'rgba(0,0,0,0.3)', transition: 'all 0.2s' }}
+        >
+          <h3 style={{ margin: 0, color: !isExtended ? 'var(--color-primary)' : '#ccc' }}>Modo Casual</h3>
+          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#aaa' }}>Juego clásico de cartas.</p>
+        </div>
+        <div 
+          onClick={() => setIsExtended(true)}
+          style={{ padding: '1rem', flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: '8px', border: isExtended ? '2px solid var(--color-secondary)' : '2px solid var(--glass-border)', background: isExtended ? 'rgba(92,37,141,0.2)' : 'rgba(0,0,0,0.3)', transition: 'all 0.2s' }}
+        >
+          <h3 style={{ margin: 0, color: isExtended ? 'var(--color-secondary)' : '#ccc' }}>Modo Extendido</h3>
+          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#aaa' }}>Botes, Draft, Habilidades y Espejismos.</p>
+        </div>
+      </div>
+      
       <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--color-primary)' }}>
-          <input 
-            type="checkbox" 
-            checked={useTiePot} 
-            onChange={e => setUseTiePot(e.target.checked)} 
-            style={{ width: '20px', height: '20px' }}
-          />
-          <span>Bote Acumulativo en Empates</span>
-        </label>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--color-primary)' }}>
-          <input 
-            type="checkbox" 
-            checked={useSkirmish} 
-            onChange={e => setUseSkirmish(e.target.checked)} 
-            style={{ width: '20px', height: '20px' }}
-          />
-          <span>Escaramuza x2 (Última batalla x2)</span>
-        </label>
         
         {isMultiplayer && (
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', border: '1px solid #95a5a6' }}>
@@ -60,7 +57,24 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack
             key={mode.id}
             className="glass-panel"
             style={{ padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--color-primary-glow)' }}
-            onClick={() => onSelectMode({ ...mode, rules: { tiePot: useTiePot, skirmishx2: useSkirmish } }, isPrivate)}
+            onClick={() => {
+              const selectedMode = { ...mode, rules: { tiePot: isExtended, skirmishx2: isExtended, extendedRules: isExtended } };
+              if (isExtended) {
+                // Find token with highest count to replace with Espejismo
+                let maxToken = 'SOL';
+                let maxCount = 0;
+                Object.entries(selectedMode.inventory).forEach(([type, count]) => {
+                  if (count > maxCount) {
+                    maxCount = count;
+                    maxToken = type;
+                  }
+                });
+                if (maxCount > 0) {
+                  selectedMode.inventory = { ...selectedMode.inventory, [maxToken]: maxCount - 1, ESPEJISMO: 1 };
+                }
+              }
+              onSelectMode(selectedMode, isPrivate);
+            }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >

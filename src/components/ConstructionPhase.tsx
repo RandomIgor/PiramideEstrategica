@@ -13,9 +13,19 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
   
   // State for the pyramid grid (key: "row-col", value: TokenType)
   const [pyramid, setPyramid] = useState<Record<string, TokenType>>({});
-
+  
   // Detect touch device to disable drag and drop which ruins touch clicks
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  const checkNeighbors = (r: number, c: number, type: TokenType, currentPyramid: Record<string, TokenType>): boolean => {
+    if (!mode.rules?.extendedRules) return true;
+    const neighbors = [
+      `${r}-${c - 1}`, `${r}-${c + 1}`,
+      `${r - 1}-${c - 1}`, `${r - 1}-${c}`,
+      `${r + 1}-${c}`, `${r + 1}-${c + 1}`
+    ];
+    return !neighbors.some(key => currentPyramid[key] === type);
+  };
 
   const handleDragStart = (e: React.DragEvent, type: TokenType, source: 'inventory' | string) => {
     e.dataTransfer.setData('tokenType', type);
@@ -35,6 +45,10 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
     // If we dragged from inventory
     if (source === 'inventory') {
       if (inventory[type] <= 0) return;
+      if (!checkNeighbors(targetRow, targetCol, type, pyramid)) {
+        alert('Sudoku Egipcio: No puedes colocar fichas idénticas juntas.');
+        return;
+      }
       
       const newInventory = { ...inventory, [type]: inventory[type] - 1 };
       
@@ -49,6 +63,14 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
     // If we dragged from another slot
     else {
       if (source === targetKey) return; // Same slot
+      
+      const tempPyramid = { ...pyramid };
+      delete tempPyramid[source]; // remove from old source to check properly
+      
+      if (!checkNeighbors(targetRow, targetCol, type, tempPyramid)) {
+        alert('Sudoku Egipcio: No puedes colocar fichas idénticas juntas.');
+        return;
+      }
       
       const newPyramid = { ...pyramid };
       newPyramid[targetKey] = type;
@@ -77,9 +99,11 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
     for (let i = 0; i < mode.levels; i++) {
       for (let j = 0; j <= i; j++) {
         if (!pyramid[`${i}-${j}`]) {
-          foundRow = i;
-          foundCol = j;
-          break;
+          if (checkNeighbors(i, j, type, pyramid)) {
+            foundRow = i;
+            foundCol = j;
+            break;
+          }
         }
       }
       if (foundRow !== -1) break;
@@ -89,6 +113,8 @@ export const ConstructionPhase: React.FC<ConstructionPhaseProps> = ({ mode, onCo
       const newInventory = { ...inventory, [type]: inventory[type] - 1 };
       setInventory(newInventory);
       setPyramid({ ...pyramid, [`${foundRow}-${foundCol}`]: type });
+    } else if (mode.rules?.extendedRules) {
+      alert('Sudoku Egipcio: No hay ningún hueco válido para colocar esta ficha sin tocar una igual.');
     }
   };
 

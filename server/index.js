@@ -173,7 +173,13 @@ function processBattleRound(roomId, io) {
   const res1 = resolveBattle(p1Token, p2Token, level, room.mode);
   const isSpecialTie = room.mode.rules?.tiePot;
   const isLastBattle = p1.usedCols.length === level - 1;
-  const basePoints = room.mode.rules?.skirmishx2 && isLastBattle ? 2 : 1;
+  let basePoints = room.mode.rules?.skirmishx2 && isLastBattle ? 2 : 1;
+  
+  if (room.mode.rules?.extendedRules) {
+    if (p1Token === 'ESPEJISMO' && res1 === 'WIN') basePoints += 1;
+    if (p2Token === 'ESPEJISMO' && res1 === 'LOSS') basePoints += 1;
+  }
+
   let points = basePoints + (isSpecialTie && res1 !== 'TIE' ? room.tiePot : 0);
   
   if (res1 === 'WIN') {

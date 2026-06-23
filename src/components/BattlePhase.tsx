@@ -43,7 +43,14 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
 
     const result = resolveBattle(playerToken, botToken, currentLevel, mode);
     const isLastBattle = usedColsPlayer.length === currentLevel - 1;
-    const basePoints = mode.rules?.skirmishx2 && isLastBattle ? 2 : 1;
+    let basePoints = mode.rules?.skirmishx2 && isLastBattle ? 2 : 1;
+    
+    // Mirage bonus
+    if (mode.rules?.extendedRules) {
+      if (playerToken === 'ESPEJISMO' && result === 'WIN') basePoints += 1;
+      if (botToken === 'ESPEJISMO' && result === 'LOSS') basePoints += 1;
+    }
+
     const isSpecialTie = mode.rules?.tiePot;
     const pointsToAward = basePoints + (isSpecialTie && result !== 'TIE' ? tiePot : 0);
     const newTiePot = result === 'TIE' && isSpecialTie ? tiePot + basePoints : 0;

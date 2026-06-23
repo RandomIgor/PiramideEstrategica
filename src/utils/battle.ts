@@ -6,6 +6,10 @@ export type BattleResult = 'WIN' | 'LOSS' | 'TIE';
 export const resolveBattle = (player: TokenType, bot: TokenType, level: number, mode: GameMode): BattleResult => {
   if (player === bot) return 'TIE';
 
+  // Regla Especial: ESPEJISMO
+  if (player === 'ESPEJISMO') return bot === 'SOL' ? 'WIN' : 'LOSS';
+  if (bot === 'ESPEJISMO') return player === 'SOL' ? 'LOSS' : 'WIN';
+
   // Find the weakest token in this mode's inventory
   let weakestToken: TokenType | null = null;
   let minVal = Infinity;
