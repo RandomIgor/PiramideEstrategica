@@ -41,8 +41,8 @@ export const GAME_MODES: GameMode[] = [
       SOL: 1,
       FARAON: 0,
       DEVOTO: 2,
-      SIERVO: 3,
-      ESCARABAJO: 0,
+      SIERVO: 0,
+      ESCARABAJO: 3,
       GATO: 0
     }
   },
@@ -56,8 +56,8 @@ export const GAME_MODES: GameMode[] = [
       SOL: 1,
       FARAON: 2,
       DEVOTO: 3,
-      SIERVO: 4,
-      ESCARABAJO: 0,
+      SIERVO: 0,
+      ESCARABAJO: 4,
       GATO: 0
     }
   },
