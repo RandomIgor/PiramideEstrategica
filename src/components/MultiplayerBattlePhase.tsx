@@ -18,7 +18,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
   const hasSavedStats = useRef(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isThotActive, setIsThotActive] = useState(false);
-  const [thotFirstPick, setThotFirstPick] = useState<number | null>(null);
+  const [thotFirstPick, setThotFirstPick] = useState<string | null>(null);
 
   useEffect(() => {
     if (roomState && roomState.currentLevel > roomState.mode.levels && !hasSavedStats.current) {
@@ -60,12 +60,13 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
     socket.emit('use_horus', { roomId });
   };
 
-  const handleThotSelect = (colIndex: number) => {
+  const handleThotSelect = (r: number, c: number) => {
+    const key = `${r}-${c}`;
     if (thotFirstPick === null) {
-      setThotFirstPick(colIndex);
+      setThotFirstPick(key);
     } else {
-      if (thotFirstPick !== colIndex) {
-        socket.emit('use_thot', { roomId, col1: thotFirstPick, col2: colIndex });
+      if (thotFirstPick !== key) {
+        socket.emit('use_thot', { roomId, key1: thotFirstPick, key2: key });
       }
       setIsThotActive(false);
       setThotFirstPick(null);
@@ -87,7 +88,8 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
         const token = me.pyramid[tokenKey];
         const isUsed = isActiveRow && me.usedCols && me.usedCols.includes(c);
         const isMyChoice = me.currentChoice === c;
-        const isThotSelected = isThotActive && thotFirstPick === c;
+        const isUnused = (isActiveRow && !isUsed) || isFutureRow;
+        const isThotSelected = isThotActive && thotFirstPick === tokenKey;
 
         rowTokens.push(
           <div
@@ -99,16 +101,14 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
               fontSize: 'var(--token-font)',
               background: isMyChoice ? 'var(--color-primary)' : (isUsed ? 'transparent' : (isThotSelected ? 'rgba(46, 204, 113, 0.3)' : 'var(--glass-bg)')),
               border: isThotSelected ? '2px solid #2ecc71' : (isActiveRow && !isUsed && !isMyChoice ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'),
-              cursor: (isActiveRow && !isUsed) ? 'pointer' : 'default',
-              boxShadow: isThotSelected ? '0 0 15px rgba(46, 204, 113, 0.5)' : 'none'
+              cursor: (isThotActive && isUnused) ? 'pointer' : ((isActiveRow && !isUsed) ? 'pointer' : 'default'),
+              boxShadow: isThotSelected ? '0 0 15px rgba(46, 204, 113, 0.5)' : (isThotActive && isUnused ? '0 0 10px rgba(255,255,255,0.2)' : 'none')
             }}
             onClick={() => {
-              if (isActiveRow && !isUsed && roomState.currentLevel <= roomState.mode.levels) {
-                if (isThotActive) {
-                  handleThotSelect(c);
-                } else if (me.currentChoice === null) {
-                  handleTokenSelect(c);
-                }
+              if (isThotActive && isUnused && roomState.currentLevel <= roomState.mode.levels) {
+                handleThotSelect(r, c);
+              } else if (isActiveRow && !isUsed && me.currentChoice === null && roomState.currentLevel <= roomState.mode.levels && !isThotActive) {
+                handleTokenSelect(c);
               }
             }}
           >
@@ -177,7 +177,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
               </div>
             )}
             
-            {isThotActive && <p style={{ color: '#2ecc71', fontWeight: 'bold', marginBottom: '1rem', animation: 'pulse 2s infinite' }}>Selecciona dos fichas de esta fila para intercambiarlas.</p>}
+            {isThotActive && <p style={{ color: '#2ecc71', fontWeight: 'bold', marginBottom: '1rem', animation: 'pulse 2s infinite' }}>Selecciona dos fichas (no usadas de cualquier fila) para intercambiarlas.</p>}
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem', minHeight: '60px' }}>
               {Array.from({ length: roomState.currentLevel }).map((_, c) => {

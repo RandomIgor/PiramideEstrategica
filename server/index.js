@@ -160,15 +160,17 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('use_thot', ({ roomId, col1, col2 }) => {
+  socket.on('use_thot', ({ roomId, key1, key2 }) => {
     const room = rooms[roomId];
     if (!room) return;
     const player = room.players.find(p => p.id === socket.id);
     if (player && !player.usedThot) {
-      if (!player.usedCols.includes(col1) && !player.usedCols.includes(col2)) {
-        const row = room.currentLevel - 1;
-        const key1 = `${row}-${col1}`;
-        const key2 = `${row}-${col2}`;
+      const [r1, c1] = key1.split('-').map(Number);
+      const [r2, c2] = key2.split('-').map(Number);
+      
+      const isUnused = (r, c) => (r === room.currentLevel - 1 && !player.usedCols.includes(c)) || r > room.currentLevel - 1;
+
+      if (isUnused(r1, c1) && isUnused(r2, c2)) {
         const temp = player.pyramid[key1];
         player.pyramid[key1] = player.pyramid[key2];
         player.pyramid[key2] = temp;

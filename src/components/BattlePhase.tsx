@@ -35,7 +35,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
   const [usedThot, setUsedThot] = useState(false);
   const [revealedBotCols, setRevealedBotCols] = useState<number[]>([]);
   const [isThotActive, setIsThotActive] = useState(false);
-  const [thotFirstPick, setThotFirstPick] = useState<number | null>(null);
+  const [thotFirstPick, setThotFirstPick] = useState<string | null>(null);
 
   const handleHorus = () => {
     if (usedHorus) return;
@@ -47,18 +47,16 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     setUsedHorus(true);
   };
 
-  const handleThotSelect = (colIndex: number) => {
+  const handleThotSelect = (r: number, c: number) => {
+    const key = `${r}-${c}`;
     if (thotFirstPick === null) {
-      setThotFirstPick(colIndex);
+      setThotFirstPick(key);
     } else {
-      if (thotFirstPick !== colIndex) {
-        const row = currentLevel - 1;
-        const key1 = `${row}-${thotFirstPick}`;
-        const key2 = `${row}-${colIndex}`;
+      if (thotFirstPick !== key) {
         const newPyramid = { ...localPlayerPyramid };
-        const temp = newPyramid[key1];
-        newPyramid[key1] = newPyramid[key2];
-        newPyramid[key2] = temp;
+        const temp = newPyramid[thotFirstPick];
+        newPyramid[thotFirstPick] = newPyramid[key];
+        newPyramid[key] = temp;
         setLocalPlayerPyramid(newPyramid);
       }
       setIsThotActive(false);
@@ -70,10 +68,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
   const handleTokenSelect = (colIndex: number) => {
     if (usedColsPlayer.includes(colIndex) || activeBattle) return;
     
-    if (isThotActive) {
-      handleThotSelect(colIndex);
-      return;
-    }
+    if (isThotActive) return; // Prevent normal battle select while Thot is active
 
     const row = currentLevel - 1;
     const playerKey = `${row}-${colIndex}`;
@@ -145,7 +140,8 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
         const tokenKey = `${r}-${c}`;
         const token = localPlayerPyramid[tokenKey];
         const isUsed = isActiveRow && usedColsPlayer.includes(c);
-        const isThotSelected = isThotActive && thotFirstPick === c;
+        const isUnused = (isActiveRow && !isUsed) || isFutureRow;
+        const isThotSelected = isThotActive && thotFirstPick === tokenKey;
 
         rowTokens.push(
           <div
@@ -157,12 +153,14 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
               fontSize: 'var(--token-font)',
               background: isUsed ? 'transparent' : (isThotSelected ? 'rgba(46, 204, 113, 0.3)' : 'var(--glass-bg)'),
               border: isThotSelected ? '2px solid #2ecc71' : (isActiveRow && !isUsed ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'),
-              cursor: (isActiveRow && !isUsed) ? 'pointer' : 'default',
+              cursor: (isThotActive && isUnused) ? 'pointer' : ((isActiveRow && !isUsed) ? 'pointer' : 'default'),
               transition: 'all 0.2s',
-              boxShadow: isThotSelected ? '0 0 15px rgba(46, 204, 113, 0.5)' : 'none'
+              boxShadow: isThotSelected ? '0 0 15px rgba(46, 204, 113, 0.5)' : (isThotActive && isUnused ? '0 0 10px rgba(255,255,255,0.2)' : 'none')
             }}
             onClick={() => {
-              if (isActiveRow && !isUsed && currentLevel <= mode.levels) {
+              if (isThotActive && isUnused && currentLevel <= mode.levels) {
+                handleThotSelect(r, c);
+              } else if (isActiveRow && !isUsed && currentLevel <= mode.levels && !isThotActive) {
                 handleTokenSelect(c);
               }
             }}
@@ -232,7 +230,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
               </div>
             )}
             
-            {isThotActive && <p style={{ color: '#2ecc71', fontWeight: 'bold', marginBottom: '1rem', animation: 'pulse 2s infinite' }}>Selecciona dos fichas de esta fila para intercambiarlas.</p>}
+            {isThotActive && <p style={{ color: '#2ecc71', fontWeight: 'bold', marginBottom: '1rem', animation: 'pulse 2s infinite' }}>Selecciona dos fichas (no usadas de cualquier fila) para intercambiarlas.</p>}
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem', minHeight: '60px' }}>
               {Array.from({ length: currentLevel }).map((_, c) => {
