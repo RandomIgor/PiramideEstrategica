@@ -9,7 +9,8 @@ interface ModeSelectorProps {
 }
 
 export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack, isMultiplayer }) => {
-  const [useSpecialRules, setUseSpecialRules] = useState(false);
+  const [useTiePot, setUseTiePot] = useState(false);
+  const [useSkirmish, setUseSkirmish] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
 
   return (
@@ -23,11 +24,21 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--color-primary)' }}>
           <input 
             type="checkbox" 
-            checked={useSpecialRules} 
-            onChange={e => setUseSpecialRules(e.target.checked)} 
+            checked={useTiePot} 
+            onChange={e => setUseTiePot(e.target.checked)} 
             style={{ width: '20px', height: '20px' }}
           />
-          <span>Activar Reglas Especiales (Bote Acumulativo en Empates)</span>
+          <span>Bote Acumulativo en Empates</span>
+        </label>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--color-primary)' }}>
+          <input 
+            type="checkbox" 
+            checked={useSkirmish} 
+            onChange={e => setUseSkirmish(e.target.checked)} 
+            style={{ width: '20px', height: '20px' }}
+          />
+          <span>Escaramuza x2 (Última batalla x2)</span>
         </label>
         
         {isMultiplayer && (
@@ -49,7 +60,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onBack
             key={mode.id}
             className="glass-panel"
             style={{ padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--color-primary-glow)' }}
-            onClick={() => onSelectMode({ ...mode, isSpecialRules: useSpecialRules }, isPrivate)}
+            onClick={() => onSelectMode({ ...mode, rules: { tiePot: useTiePot, skirmishx2: useSkirmish } }, isPrivate)}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >

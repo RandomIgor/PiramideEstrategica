@@ -314,8 +314,12 @@ function App() {
         <div className="glass-panel animate-fade-in" style={{ padding: '2rem', textAlign: 'left', maxWidth: '600px' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--color-secondary)' }}>Modos Especiales</h2>
           <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-            <h3 style={{ color: 'var(--color-primary)' }}>Desempates Acumulativos</h3>
+            <h3 style={{ color: 'var(--color-primary)' }}>Bote Acumulativo en Empates</h3>
             <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>Si dos fichas empatan (mismo valor), se genera un Bote de 1 punto. Quien gane el siguiente duelo se lleva los puntos de la victoria MÁS el Bote acumulado. ¡Ideal para partidas de infarto!</p>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+            <h3 style={{ color: 'var(--color-primary)' }}>Escaramuza x2</h3>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>La última batalla de cada nivel (cuando solo te queda una ficha) es más crítica. Quien gane ese último duelo se lleva el DOBLE de puntos base (2 puntos en vez de 1).</p>
           </div>
           <div style={{ textAlign: 'center', marginTop: '2rem' }}>
             <button className="btn btn-secondary" onClick={() => setCurrentView('menu')}>Volver</button>

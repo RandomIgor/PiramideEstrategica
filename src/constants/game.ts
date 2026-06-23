@@ -23,7 +23,11 @@ export interface GameMode {
   totalTokens: number;
   description: string;
   inventory: Record<TokenType, number>;
-  isSpecialRules?: boolean;
+  isSpecialRules?: boolean; // deprecated
+  rules?: {
+    tiePot: boolean;
+    skirmishx2: boolean;
+  };
 }
 
 export const GAME_MODES: GameMode[] = [

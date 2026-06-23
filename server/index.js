@@ -171,8 +171,10 @@ function processBattleRound(roomId, io) {
   const p2Token = p2.pyramid[`${row}-${p2.currentChoice}`];
 
   const res1 = resolveBattle(p1Token, p2Token, level, room.mode);
-  const isSpecial = room.mode.isSpecialRules;
-  let points = 1 + (isSpecial ? room.tiePot : 0);
+  const isSpecialTie = room.mode.rules?.tiePot;
+  const isLastBattle = p1.usedCols.length === level - 1;
+  const basePoints = room.mode.rules?.skirmishx2 && isLastBattle ? 2 : 1;
+  let points = basePoints + (isSpecialTie && res1 !== 'TIE' ? room.tiePot : 0);
   
   if (res1 === 'WIN') {
     p1.score += points;
@@ -183,8 +185,8 @@ function processBattleRound(roomId, io) {
     room.tiePot = 0;
     room.logs.push(`Nivel ${level}: ${p2.name} (${TOKENS[p2Token].name}) vence a ${p1.name} (${TOKENS[p1Token].name})`);
   } else {
-    if (isSpecial) room.tiePot += 1;
-    room.logs.push(`Nivel ${level}: Empate entre ${TOKENS[p1Token].name}s. ${isSpecial ? `Bote: ${room.tiePot}` : ''}`);
+    if (isSpecialTie) room.tiePot += basePoints;
+    room.logs.push(`Nivel ${level}: Empate entre ${TOKENS[p1Token].name}s. ${isSpecialTie ? `Bote: ${room.tiePot}` : ''}`);
   }
 
   // Marcar fichas como usadas

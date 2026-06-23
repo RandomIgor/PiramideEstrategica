@@ -42,10 +42,11 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
     const botToken = botPyramid[botTokenKey];
 
     const result = resolveBattle(playerToken, botToken, currentLevel, mode);
-    const basePoints = 1;
-    const isSpecial = mode.isSpecialRules;
-    const pointsToAward = basePoints + (isSpecial && result !== 'TIE' ? tiePot : 0);
-    const newTiePot = result === 'TIE' && isSpecial ? tiePot + 1 : 0;
+    const isLastBattle = usedColsPlayer.length === currentLevel - 1;
+    const basePoints = mode.rules?.skirmishx2 && isLastBattle ? 2 : 1;
+    const isSpecialTie = mode.rules?.tiePot;
+    const pointsToAward = basePoints + (isSpecialTie && result !== 'TIE' ? tiePot : 0);
+    const newTiePot = result === 'TIE' && isSpecialTie ? tiePot + basePoints : 0;
 
     setActiveBattle({
       playerToken, botToken, result, points: pointsToAward, newTiePot, colIndex, botColIndex: botChoiceCol, levelObj: currentLevel
@@ -141,7 +142,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
             <h3 style={{ color: 'var(--color-primary)' }}>TÚ</h3>
             <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{playerScore}</p>
           </div>
-          {mode.isSpecialRules && (
+          {mode.rules?.tiePot && (
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ color: '#ccc' }}>BOTE</h3>
               <p style={{ fontSize: '1.5rem', color: '#f39c12' }}>{tiePot}</p>
@@ -186,7 +187,7 @@ export const BattlePhase: React.FC<BattlePhaseProps> = ({ mode, playerPyramid, b
               {activeBattle.result === 'WIN' ? '¡TÚ GANAS!' : (activeBattle.result === 'LOSS' ? '¡RIVAL GANA!' : '¡EMPATE!')}
             </h2>
             <p style={{ fontSize: '1.2rem', color: '#ccc' }}>
-              {activeBattle.result === 'TIE' && mode.isSpecialRules ? `Bote acumulado a: ${activeBattle.newTiePot}` : (activeBattle.result === 'TIE' ? 'Nadie suma puntos' : `+${activeBattle.points} Puntos`)}
+              {activeBattle.result === 'TIE' && mode.rules?.tiePot ? `Bote acumulado a: ${activeBattle.newTiePot}` : (activeBattle.result === 'TIE' ? 'Nadie suma puntos' : `+${activeBattle.points} Puntos`)}
             </p>
             
             <div className="battle-vs-container">
