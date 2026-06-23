@@ -17,6 +17,8 @@ interface MultiplayerBattlePhaseProps {
 export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ socket, roomId, roomState, playerId, onFinish, lastBattleData, onClearBattle }) => {
   const hasSavedStats = useRef(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [isThotActive, setIsThotActive] = useState(false);
+  const [thotFirstPick, setThotFirstPick] = useState<number | null>(null);
 
   useEffect(() => {
     if (roomState && roomState.currentLevel > roomState.mode.levels && !hasSavedStats.current) {
@@ -53,6 +55,23 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
     socket.emit('submit_battle_choice', { roomId, choiceCol: colIndex });
   };
 
+  const handleHorus = () => {
+    if (me.usedHorus) return;
+    socket.emit('use_horus', { roomId });
+  };
+
+  const handleThotSelect = (colIndex: number) => {
+    if (thotFirstPick === null) {
+      setThotFirstPick(colIndex);
+    } else {
+      if (thotFirstPick !== colIndex) {
+        socket.emit('use_thot', { roomId, col1: thotFirstPick, col2: colIndex });
+      }
+      setIsThotActive(false);
+      setThotFirstPick(null);
+    }
+  };
+
   const renderPyramid = () => {
     const rows = [];
     for (let r = 0; r < roomState.mode.levels; r++) {
@@ -68,6 +87,7 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
         const token = me.pyramid[tokenKey];
         const isUsed = isActiveRow && me.usedCols && me.usedCols.includes(c);
         const isMyChoice = me.currentChoice === c;
+        const isThotSelected = isThotActive && thotFirstPick === c;
 
         rowTokens.push(
           <div
@@ -77,12 +97,18 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
               padding: '0.8rem', width: 'var(--token-size)', height: 'var(--token-size)',
               display: 'flex', justifyContent: 'center', alignItems: 'center',
               fontSize: 'var(--token-font)',
-              background: isMyChoice ? 'var(--color-primary)' : (isUsed ? 'transparent' : 'var(--glass-bg)'),
-              border: isActiveRow && !isUsed && !isMyChoice ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'
+              background: isMyChoice ? 'var(--color-primary)' : (isUsed ? 'transparent' : (isThotSelected ? 'rgba(46, 204, 113, 0.3)' : 'var(--glass-bg)')),
+              border: isThotSelected ? '2px solid #2ecc71' : (isActiveRow && !isUsed && !isMyChoice ? '2px solid var(--color-primary)' : '2px solid var(--glass-border)'),
+              cursor: (isActiveRow && !isUsed) ? 'pointer' : 'default',
+              boxShadow: isThotSelected ? '0 0 15px rgba(46, 204, 113, 0.5)' : 'none'
             }}
             onClick={() => {
-              if (isActiveRow && !isUsed && me.currentChoice === null && roomState.currentLevel <= roomState.mode.levels) {
-                handleTokenSelect(c);
+              if (isActiveRow && !isUsed && roomState.currentLevel <= roomState.mode.levels) {
+                if (isThotActive) {
+                  handleThotSelect(c);
+                } else if (me.currentChoice === null) {
+                  handleTokenSelect(c);
+                }
               }
             }}
           >
@@ -129,7 +155,42 @@ export const MultiplayerBattlePhase: React.FC<MultiplayerBattlePhaseProps> = ({ 
         </div>
 
         {!isGameOver ? (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', width: '100%' }}>
+            {roomState.mode.rules?.extendedRules && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button 
+                  className={`btn ${me.usedHorus ? 'btn-secondary' : 'btn-primary'}`} 
+                  disabled={me.usedHorus || me.currentChoice !== null}
+                  onClick={handleHorus}
+                  style={{ opacity: me.usedHorus ? 0.5 : 1, padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                >
+                  👁️ Ojo de Horus {me.usedHorus && '(Usado)'}
+                </button>
+                <button 
+                  className={`btn ${me.usedThot ? 'btn-secondary' : (isThotActive ? 'btn-accent' : 'btn-primary')}`} 
+                  disabled={me.usedThot || me.currentChoice !== null}
+                  onClick={() => setIsThotActive(!isThotActive)}
+                  style={{ opacity: me.usedThot ? 0.5 : 1, padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                >
+                  🔄 Dios Thot {me.usedThot && '(Usado)'} {isThotActive && '(Activo)'}
+                </button>
+              </div>
+            )}
+            
+            {isThotActive && <p style={{ color: '#2ecc71', fontWeight: 'bold', marginBottom: '1rem', animation: 'pulse 2s infinite' }}>Selecciona dos fichas de esta fila para intercambiarlas.</p>}
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem', minHeight: '60px' }}>
+              {Array.from({ length: roomState.currentLevel }).map((_, c) => {
+                const isRevealed = me.revealedCols && me.revealedCols.includes(c);
+                const isUsed = rival.usedCols && rival.usedCols.includes(c);
+                return (
+                  <div key={`bot-${c}`} style={{ width: '50px', height: '50px', border: '1px solid var(--color-accent)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: isUsed ? 'transparent' : 'rgba(231, 76, 60, 0.2)', opacity: isUsed ? 0.2 : 1 }}>
+                    {isRevealed && !isUsed ? <span style={{ fontSize: '1.5rem' }}>{TOKENS[rival.pyramid[`${roomState.currentLevel - 1}-${c}`] as TokenType].icon}</span> : (isUsed ? '' : '❓')}
+                  </div>
+                );
+              })}
+            </div>
+
             <h3>Nivel Actual: {roomState.currentLevel} de {roomState.mode.levels}</h3>
             {me.currentChoice !== null && rival.currentChoice === null && (
               <p style={{ color: '#f39c12', marginTop: '0.5rem' }}>Esperando a que el rival elija su ficha...</p>

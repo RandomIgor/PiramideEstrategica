@@ -14,7 +14,7 @@ export const TOKENS: Record<TokenType, Token> = {
   SIERVO: { id: 'SIERVO', name: 'Siervo', value: 2, icon: '🏺' },
   ESCARABAJO: { id: 'ESCARABAJO', name: 'Escarabajo', value: 1, icon: '🪲' },
   GATO: { id: 'GATO', name: 'Gato Místico', value: 6, icon: '🐈⬛' },
-  ESPEJISMO: { id: 'ESPEJISMO', name: 'Espejismo', value: 0, icon: '👁️' },
+  ESPEJISMO: { id: 'ESPEJISMO', name: 'Espejismo', value: 0, icon: '🌫️' },
 };
 
 export interface GameMode {

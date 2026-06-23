@@ -85,7 +85,7 @@ io.on('connection', (socket) => {
     rooms[roomId] = {
       mode: mode,
       isPrivate: isPrivate || false,
-      players: [{ id: socket.id, name: username || 'Jugador 1', score: 0, ready: false, pyramid: null, currentChoice: null, usedCols: [] }],
+      players: [{ id: socket.id, name: username || 'Jugador 1', score: 0, ready: false, pyramid: null, currentChoice: null, usedCols: [], usedHorus: false, usedThot: false, revealedCols: [] }],
       currentLevel: 1,
       tiePot: 0,
       logs: []
@@ -103,7 +103,7 @@ io.on('connection', (socket) => {
   socket.on('join_room', ({ roomId, username }) => {
     const room = rooms[roomId];
     if (room && room.players.length === 1) {
-      room.players.push({ id: socket.id, name: username || 'Jugador 2', score: 0, ready: false, pyramid: null, currentChoice: null, usedCols: [] });
+      room.players.push({ id: socket.id, name: username || 'Jugador 2', score: 0, ready: false, pyramid: null, currentChoice: null, usedCols: [], usedHorus: false, usedThot: false, revealedCols: [] });
       socket.join(roomId);
       io.to(roomId).emit('room_state', room);
       io.to(roomId).emit('start_construction');
@@ -140,6 +140,41 @@ io.on('connection', (socket) => {
       processBattleRound(roomId, io);
     } else {
       io.to(roomId).emit('room_state', room);
+    }
+  });
+
+  socket.on('use_horus', ({ roomId }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+    const player = room.players.find(p => p.id === socket.id);
+    const enemy = room.players.find(p => p.id !== socket.id);
+    if (player && enemy && !player.usedHorus) {
+      const available = Array.from({ length: room.currentLevel }, (_, i) => i)
+        .filter(c => !enemy.usedCols.includes(c) && !player.revealedCols.includes(c));
+      if (available.length > 0) {
+        const pick = available[Math.floor(Math.random() * available.length)];
+        player.revealedCols.push(pick);
+      }
+      player.usedHorus = true;
+      io.to(roomId).emit('room_state', room);
+    }
+  });
+
+  socket.on('use_thot', ({ roomId, col1, col2 }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+    const player = room.players.find(p => p.id === socket.id);
+    if (player && !player.usedThot) {
+      if (!player.usedCols.includes(col1) && !player.usedCols.includes(col2)) {
+        const row = room.currentLevel - 1;
+        const key1 = `${row}-${col1}`;
+        const key2 = `${row}-${col2}`;
+        const temp = player.pyramid[key1];
+        player.pyramid[key1] = player.pyramid[key2];
+        player.pyramid[key2] = temp;
+        player.usedThot = true;
+        io.to(roomId).emit('room_state', room);
+      }
     }
   });
 
@@ -206,6 +241,8 @@ function processBattleRound(roomId, io) {
   if (p1.usedCols.length === level) {
     p1.usedCols = [];
     p2.usedCols = [];
+    p1.revealedCols = [];
+    p2.revealedCols = [];
     room.currentLevel += 1;
   }
 
